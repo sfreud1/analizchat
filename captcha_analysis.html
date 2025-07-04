@@ -1,0 +1,628 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Antispam Captcha Analizi</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            padding: 30px;
+        }
+        h1 {
+            color: #2c3e50;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        .stat-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+        }
+        .stat-number {
+            font-size: 2.5em;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        .stat-label {
+            font-size: 1.1em;
+            opacity: 0.9;
+        }
+        .chart-container {
+            margin: 30px 0;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 10px;
+        }
+        .chart-title {
+            font-size: 1.5em;
+            color: #2c3e50;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        .reason-bar {
+            margin: 10px 0;
+            background: white;
+            border-radius: 5px;
+            padding: 10px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        .reason-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 5px;
+        }
+        .reason-name {
+            font-weight: bold;
+            color: #2c3e50;
+        }
+        .reason-count {
+            background: #3498db;
+            color: white;
+            padding: 3px 8px;
+            border-radius: 15px;
+            font-size: 0.9em;
+        }
+        .progress-bar {
+            width: 100%;
+            height: 20px;
+            background: #ecf0f1;
+            border-radius: 10px;
+            overflow: hidden;
+        }
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #3498db, #2980b9);
+            transition: width 0.3s ease;
+        }
+        .user-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        .user-table th {
+            background: #34495e;
+            color: white;
+            padding: 12px;
+            text-align: left;
+        }
+        .user-table td {
+            padding: 10px 12px;
+            border-bottom: 1px solid #ddd;
+        }
+        .user-table tr:nth-child(even) {
+            background: #f8f9fa;
+        }
+        .user-table tr:hover {
+            background: #e3f2fd;
+        }
+        .status-active {
+            background: #27ae60;
+            color: white;
+            padding: 3px 8px;
+            border-radius: 12px;
+            font-size: 0.8em;
+        }
+        .status-inactive {
+            background: #95a5a6;
+            color: white;
+            padding: 3px 8px;
+            border-radius: 12px;
+            font-size: 0.8em;
+        }
+        .high-risk {
+            background: #e74c3c;
+            color: white;
+        }
+        .medium-risk {
+            background: #f39c12;
+            color: white;
+        }
+        .low-risk {
+            background: #27ae60;
+            color: white;
+        }
+        .filter-container {
+            margin: 20px 0;
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+        .filter-input {
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 14px;
+        }
+        .filter-select {
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 14px;
+        }
+        .duplicate-warning {
+            background: #f39c12;
+            color: white;
+            padding: 10px;
+            border-radius: 5px;
+            margin: 10px 0;
+            text-align: center;
+        }
+        .warning-text {
+            background-color: #fff3cd;
+            border: 1px solid #ffeaa7;
+            color: #856404;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 20px 0;
+        }
+        .file-upload-container {
+            background: #e8f4fd;
+            border: 2px dashed #3498db;
+            border-radius: 10px;
+            padding: 20px;
+            text-align: center;
+            margin: 20px 0;
+        }
+        .upload-button {
+            background: linear-gradient(135deg, #3498db, #2980b9);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 10px;
+            transition: all 0.3s ease;
+        }
+        .upload-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(52, 152, 219, 0.3);
+        }
+        .file-input {
+            display: none;
+        }
+        .loading-spinner {
+            display: none;
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #3498db;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 20px auto;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .success-message {
+            background: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 20px 0;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🛡️ Antispam Captcha Analizi</h1>
+        
+        <div class="warning-text">
+            <strong>⚠️ Uyarı:</strong> Bu dosya 41.7MB boyutunda olup, binlerce spam kaydı içermektedir. 
+            Analiz için sadece ilk 50 satır yüklendi. Tam analiz için aşağıdaki butonu kullanarak JSON dosyasını yükleyebilirsiniz.
+        </div>
+
+        <div class="file-upload-container">
+            <h3>📁 JSON Dosyası Yükle</h3>
+            <p>Tam captcha.json dosyasını yükleyerek detaylı analiz yapabilirsiniz</p>
+            <input type="file" id="jsonFileInput" class="file-input" accept=".json" />
+            <button class="upload-button" onclick="document.getElementById('jsonFileInput').click()">
+                📂 JSON Dosyası Seç
+            </button>
+            <button class="upload-button" onclick="loadSampleData()" style="background: linear-gradient(135deg, #27ae60, #229954);">
+                🔄 Örnek Verileri Yükle
+            </button>
+            <div class="loading-spinner" id="loadingSpinner"></div>
+            <div class="success-message" id="successMessage">
+                <strong>✅ Başarılı!</strong> JSON dosyası yüklendi ve analiz güncellendi.
+            </div>
+        </div>
+
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-number" id="totalUsers">45+</div>
+                <div class="stat-label">Toplam Kullanıcı</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="totalWarnings">72+</div>
+                <div class="stat-label">Toplam Uyarı</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="activeUsers">13</div>
+                <div class="stat-label">Aktif Captcha</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="highRiskUsers">6</div>
+                <div class="stat-label">Yüksek Risk</div>
+            </div>
+        </div>
+
+        <div class="chart-container">
+            <div class="chart-title">🚨 Spam Sebepleri Dağılımı</div>
+            <div id="reasonsChart"></div>
+        </div>
+
+        <div class="chart-container">
+            <div class="chart-title">📊 En Sık Spam Yapan Kullanıcılar</div>
+            <div class="filter-container">
+                <input type="text" id="userFilter" class="filter-input" placeholder="Kullanıcı adı ara...">
+                <select id="statusFilter" class="filter-select">
+                    <option value="">Tüm Durumlar</option>
+                    <option value="active">Aktif Captcha</option>
+                    <option value="inactive">Pasif</option>
+                </select>
+                <select id="riskFilter" class="filter-select">
+                    <option value="">Tüm Risk Seviyeleri</option>
+                    <option value="high">Yüksek Risk (5+ uyarı)</option>
+                    <option value="medium">Orta Risk (2-4 uyarı)</option>
+                    <option value="low">Düşük Risk (0-1 uyarı)</option>
+                </select>
+            </div>
+            
+            <table class="user-table" id="userTable">
+                <thead>
+                    <tr>
+                        <th>Kullanıcı ID</th>
+                        <th>İsim</th>
+                        <th>Uyarı Sayısı</th>
+                        <th>Rapor Sayısı</th>
+                        <th>Captcha Durumu</th>
+                        <th>Risk Seviyesi</th>
+                    </tr>
+                </thead>
+                <tbody id="userTableBody">
+                </tbody>
+            </table>
+        </div>
+
+        <div class="duplicate-warning">
+            <strong>🔄 Tespit Edilen Tekrarlar:</strong> Aynı kullanıcının birden fazla aynı mesajı spam olarak işaretlenmiş
+        </div>
+    </div>
+
+    <script>
+        // Global veri objesi
+        let spamData = {
+            users: [
+                {id: "1802829620", name: "Garfield", warnings: 235, reports: 18, captcha: "1", reasons: ["Report", "Forward", "Forbidden link", "Flood", "Forbidden Tag", "CA"]},
+                {id: "6268398359", name: "Crypto", warnings: 1, reports: 0, captcha: "1", reasons: ["Forbidden link"]},
+                {id: "6004545238", name: "Gale", warnings: 1, reports: 0, captcha: null, reasons: ["Forbidden link"]},
+                {id: "6620753933", name: "Hamza", warnings: 1, reports: 0, captcha: null, reasons: ["Forbidden link"]},
+                {id: "5945000926", name: "Oralla", warnings: 1, reports: 0, captcha: null, reasons: ["Forbidden link"]},
+                {id: "6034233630", name: "Carrol", warnings: 1, reports: 0, captcha: null, reasons: ["Forbidden link"]},
+                {id: "6062824407", name: "OxKai | Never Dm You First", warnings: 0, reports: 0, captcha: "1", reasons: []},
+                {id: "658261335", name: "OK", warnings: 2, reports: 0, captcha: "1", reasons: ["Banned word"]},
+                {id: "731468623", name: "Dovsi 🦴", warnings: 4, reports: 0, captcha: "1", reasons: ["Forbidden link", "Forbidden URL"]},
+                {id: "5592960206", name: "Antonella", warnings: 1, reports: 0, captcha: null, reasons: ["Forbidden link"]},
+                {id: "6187555002", name: "Consuelo", warnings: 1, reports: 0, captcha: null, reasons: ["Forbidden link"]},
+                {id: "5714828222", name: "Fic92", warnings: 1, reports: 0, captcha: null, reasons: ["Forbidden link"]},
+                {id: "1135153173", name: "Free🥷", warnings: 1, reports: 0, captcha: null, reasons: ["Forbidden link"]},
+                {id: "6062259453", name: "Celina", warnings: 2, reports: 0, captcha: null, reasons: ["Forbidden link"]},
+                {id: "6100441637", name: "Eveline", warnings: 1, reports: 0, captcha: null, reasons: ["Forbidden link"]},
+                {id: "7913118733", name: "Sara", warnings: 1, reports: 0, captcha: null, reasons: ["Forward"]},
+                {id: "5931568686", name: "Viola", warnings: 1, reports: 0, captcha: null, reasons: ["Forbidden link"]},
+                {id: "6174986048", name: "🐸 Abubakar", warnings: 1, reports: 0, captcha: null, reasons: ["Forbidden link"]},
+                {id: "6562764990", name: "Patrick🍅🦆🐈‍⬛", warnings: 1, reports: 0, captcha: null, reasons: ["Forbidden link"]},
+                {id: "5496573568", name: "Danang", warnings: 1, reports: 0, captcha: null, reasons: ["Forbidden link"]},
+                {id: "6048685629", name: "Carmen", warnings: 1, reports: 0, captcha: null, reasons: ["Forbidden link"]},
+                {id: "5494127493", name: "Rasla", warnings: 1, reports: 0, captcha: null, reasons: ["Forbidden link"]},
+                {id: "6111344391", name: "Shawn", warnings: 1, reports: 0, captcha: null, reasons: ["Forbidden link"]},
+                {id: "6546220268", name: "Samia", warnings: 0, reports: 0, captcha: null, reasons: []},
+                {id: "1739572833", name: "Vikilix 🔫", warnings: 1, reports: 0, captcha: null, reasons: ["Forbidden link"]},
+                {id: "5080131491", name: "Catelon", warnings: 4, reports: 0, captcha: "1", reasons: ["Flood", "Forbidden CA"]},
+                {id: "6120447165", name: "Moll", warnings: 1, reports: 0, captcha: null, reasons: ["Forbidden link"]},
+                {id: "5963573417", name: "Raymond", warnings: 1, reports: 0, captcha: null, reasons: ["Forbidden link"]},
+                {id: "6215986029", name: "Lani", warnings: 1, reports: 0, captcha: null, reasons: ["Forbidden link"]},
+                {id: "1481793357", name: "Bleroo", warnings: 3, reports: 0, captcha: null, reasons: ["Forbidden link"]},
+                {id: "5636885775", name: "Ardit", warnings: 6, reports: 0, captcha: null, reasons: ["Forbidden link"]},
+                {id: "5935319979", name: "Merry", warnings: 1, reports: 0, captcha: null, reasons: ["Forbidden link"]},
+                {id: "7201854476", name: "Azir", warnings: 2, reports: 0, captcha: "1", reasons: ["Forbidden link"]},
+                {id: "6165885752", name: "Aimee", warnings: 1, reports: 0, captcha: null, reasons: ["Forbidden link"]},
+                {id: "6742523571", name: "Trace", warnings: 1, reports: 0, captcha: null, reasons: ["Forbidden link"]},
+                {id: "1365355482", name: "Jd", warnings: 1, reports: 0, captcha: "1", reasons: ["Banned word"]},
+                {id: "1333790941", name: "sup", warnings: 1, reports: 0, captcha: "1", reasons: ["Forbidden link"]},
+                {id: "1966365857", name: "Eugen", warnings: 0, reports: 0, captcha: null, reasons: []},
+                {id: "6984078415", name: "Николай", warnings: 1, reports: 0, captcha: null, reasons: ["Forbidden link"]},
+                {id: "6902454490", name: "Тима", warnings: 1, reports: 0, captcha: null, reasons: ["Forbidden link"]},
+                {id: "883323147", name: "Rakesh", warnings: 1, reports: 0, captcha: null, reasons: ["Forbidden link"]},
+                {id: "6373777148", name: "Daisie", warnings: 1, reports: 0, captcha: null, reasons: ["Forbidden link"]},
+                {id: "6390747699", name: "Егор", warnings: 1, reports: 0, captcha: null, reasons: ["Forbidden link"]},
+                {id: "1087968824", name: "Group", warnings: 9, reports: 0, captcha: null, reasons: ["Report", "Flood", "Forbidden word"]},
+                {id: "6233022877", name: "dάnice", warnings: 1, reports: 0, captcha: null, reasons: ["Forbidden link"]}
+            ]
+        };
+
+        // Spam nedenlerini analiz et
+        const reasonCounts = {};
+        spamData.users.forEach(user => {
+            user.reasons.forEach(reason => {
+                reasonCounts[reason] = (reasonCounts[reason] || 0) + 1;
+            });
+        });
+
+        // En çok tekrar eden nedenler
+        const sortedReasons = Object.entries(reasonCounts)
+            .sort(([,a], [,b]) => b - a)
+            .slice(0, 10);
+
+        const maxCount = Math.max(...Object.values(reasonCounts));
+
+        // Grafik oluştur
+        function createReasonsChart() {
+            const chartContainer = document.getElementById('reasonsChart');
+            chartContainer.innerHTML = '';
+
+            sortedReasons.forEach(([reason, count]) => {
+                const percentage = (count / maxCount) * 100;
+                
+                const reasonBar = document.createElement('div');
+                reasonBar.className = 'reason-bar';
+                
+                reasonBar.innerHTML = `
+                    <div class="reason-header">
+                        <span class="reason-name">${reason}</span>
+                        <span class="reason-count">${count}</span>
+                    </div>
+                    <div class="progress-bar">
+                        <div class="progress-fill" style="width: ${percentage}%"></div>
+                    </div>
+                `;
+                
+                chartContainer.appendChild(reasonBar);
+            });
+        }
+
+        // Risk seviyesi hesapla
+        function getRiskLevel(warnings) {
+            if (warnings >= 5) return 'high';
+            if (warnings >= 2) return 'medium';
+            return 'low';
+        }
+
+        // Risk seviyesi renk
+        function getRiskClass(warnings) {
+            if (warnings >= 5) return 'high-risk';
+            if (warnings >= 2) return 'medium-risk';
+            return 'low-risk';
+        }
+
+        // Risk seviyesi metin
+        function getRiskText(warnings) {
+            if (warnings >= 5) return 'Yüksek Risk';
+            if (warnings >= 2) return 'Orta Risk';
+            return 'Düşük Risk';
+        }
+
+        // Kullanıcı tablosunu oluştur
+        function createUserTable(filteredUsers = spamData.users) {
+            const tbody = document.getElementById('userTableBody');
+            tbody.innerHTML = '';
+
+            // Uyarı sayısına göre sırala
+            const sortedUsers = [...filteredUsers].sort((a, b) => b.warnings - a.warnings);
+
+            sortedUsers.forEach(user => {
+                const row = document.createElement('tr');
+                
+                const statusClass = user.captcha === "1" ? 'status-active' : 'status-inactive';
+                const statusText = user.captcha === "1" ? 'Aktif' : 'Pasif';
+                const riskClass = getRiskClass(user.warnings);
+                const riskText = getRiskText(user.warnings);
+                
+                row.innerHTML = `
+                    <td>${user.id}</td>
+                    <td>${user.name}</td>
+                    <td>${user.warnings}</td>
+                    <td>${user.reports}</td>
+                    <td><span class="${statusClass}">${statusText}</span></td>
+                    <td><span class="${riskClass}" style="padding: 3px 8px; border-radius: 12px; font-size: 0.8em;">${riskText}</span></td>
+                `;
+                
+                tbody.appendChild(row);
+            });
+        }
+
+        // Filtreleme fonksiyonu
+        function applyFilters() {
+            const userFilter = document.getElementById('userFilter').value.toLowerCase();
+            const statusFilter = document.getElementById('statusFilter').value;
+            const riskFilter = document.getElementById('riskFilter').value;
+
+            let filteredUsers = spamData.users.filter(user => {
+                // İsim filtresi
+                const nameMatch = user.name.toLowerCase().includes(userFilter);
+                
+                // Durum filtresi
+                let statusMatch = true;
+                if (statusFilter === 'active') {
+                    statusMatch = user.captcha === "1";
+                } else if (statusFilter === 'inactive') {
+                    statusMatch = user.captcha !== "1";
+                }
+                
+                // Risk filtresi
+                let riskMatch = true;
+                if (riskFilter) {
+                    const userRisk = getRiskLevel(user.warnings);
+                    riskMatch = userRisk === riskFilter;
+                }
+                
+                return nameMatch && statusMatch && riskMatch;
+            });
+
+            createUserTable(filteredUsers);
+        }
+
+        // İstatistikleri güncelle
+        function updateStats() {
+            const totalWarnings = spamData.users.reduce((sum, user) => sum + user.warnings, 0);
+            const activeUsers = spamData.users.filter(user => user.captcha === "1").length;
+            const highRiskUsers = spamData.users.filter(user => user.warnings >= 5).length;
+
+            document.getElementById('totalUsers').textContent = spamData.users.length + '+';
+            document.getElementById('totalWarnings').textContent = totalWarnings + '+';
+            document.getElementById('activeUsers').textContent = activeUsers;
+            document.getElementById('highRiskUsers').textContent = highRiskUsers;
+        }
+
+        // JSON dosyası yükleme fonksiyonu
+        function loadJSONFile() {
+            const fileInput = document.getElementById('jsonFileInput');
+            const file = fileInput.files[0];
+            
+            if (!file) {
+                alert('Lütfen bir JSON dosyası seçin.');
+                return;
+            }
+
+            const loadingSpinner = document.getElementById('loadingSpinner');
+            const successMessage = document.getElementById('successMessage');
+            
+            loadingSpinner.style.display = 'block';
+            successMessage.style.display = 'none';
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const jsonData = JSON.parse(e.target.result);
+                    processJSONData(jsonData);
+                    loadingSpinner.style.display = 'none';
+                    successMessage.style.display = 'block';
+                    
+                    // 3 saniye sonra mesajı gizle
+                    setTimeout(() => {
+                        successMessage.style.display = 'none';
+                    }, 3000);
+                } catch (error) {
+                    loadingSpinner.style.display = 'none';
+                    alert('JSON dosyası okunamadı: ' + error.message);
+                }
+            };
+            
+            reader.readAsText(file);
+        }
+
+        // JSON verilerini işleme fonksiyonu
+        function processJSONData(jsonData) {
+            let tableData = null;
+            
+            // JSON yapısını analiz et
+            if (Array.isArray(jsonData)) {
+                for (let item of jsonData) {
+                    if (item.type === 'table' && item.name === 'captcha' && item.data) {
+                        tableData = item.data;
+                        break;
+                    }
+                }
+            } else if (jsonData.data) {
+                tableData = jsonData.data;
+            }
+
+            if (!tableData) {
+                alert('Geçerli captcha verileri bulunamadı.');
+                return;
+            }
+
+            // Verileri işle ve spamData'yı güncelle
+            const processedUsers = tableData.map(user => {
+                let reasons = [];
+                try {
+                    if (user.chat_reasons) {
+                        const chatReasons = JSON.parse(user.chat_reasons);
+                        if (Array.isArray(chatReasons)) {
+                            reasons = [...new Set(chatReasons.map(item => item.reason))];
+                        }
+                    }
+                } catch (e) {
+                    // JSON parse hatası
+                }
+
+                return {
+                    id: user.user_id || '',
+                    name: user.user_firstname || 'Bilinmeyen',
+                    warnings: parseInt(user.warning_count) || 0,
+                    reports: parseInt(user.report_count) || 0,
+                    captcha: user.captcha_status,
+                    reasons: reasons
+                };
+            });
+
+            spamData.users = processedUsers;
+
+            // Görselleştirmeyi güncelle
+            createReasonsChart();
+            createUserTable();
+            updateStats();
+        }
+
+        // Örnek verileri yükleme fonksiyonu
+        function loadSampleData() {
+            // captcha_formatted.json dosyasını fetch ile yükle
+            fetch('./captcha_formatted.json')
+                .then(response => {
+                    if (!response.ok) {
+                        // Eğer dosya bulunamazsa, mevcut verileri kullan
+                        throw new Error('Dosya bulunamadı');
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    processJSONData(data);
+                    document.getElementById('successMessage').style.display = 'block';
+                    setTimeout(() => {
+                        document.getElementById('successMessage').style.display = 'none';
+                    }, 3000);
+                })
+                .catch(error => {
+                    alert('Örnek dosya yüklenemedi. Lütfen JSON dosyasını manuel olarak yükleyin.');
+                });
+        }
+
+        // Event listener'ları ekle
+        document.getElementById('userFilter').addEventListener('input', applyFilters);
+        document.getElementById('statusFilter').addEventListener('change', applyFilters);
+        document.getElementById('riskFilter').addEventListener('change', applyFilters);
+        document.getElementById('jsonFileInput').addEventListener('change', loadJSONFile);
+
+        // Sayfa yüklendiğinde çalıştır
+        document.addEventListener('DOMContentLoaded', function() {
+            createReasonsChart();
+            createUserTable();
+            updateStats();
+        });
+    </script>
+</body>
+</html>

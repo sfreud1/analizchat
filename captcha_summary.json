@@ -1,0 +1,14 @@
+{
+  "total_records": 13483,
+  "database_info": {
+    "name": "catcoin",
+    "table": "captcha",
+    "export_version": "5.1.1deb5ubuntu1"
+  },
+  "statistics": {
+    "active_captcha_users": 1078,
+    "total_warnings": 75324,
+    "total_reports": 204,
+    "users_with_warnings": 12569
+  }
+}
